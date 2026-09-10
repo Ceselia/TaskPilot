@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>「一句话代办」演示 Demo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <span class="logo">AI</span>
+    <div>
+      <h1>「一句话代办」演示 Demo</h1>
+      <p>典型案例：把下载目录里的发票整理一下，汇总个表发给张三</p>
+    </div>
+  </div>
+  <div class="badge">P0 · 全模拟 · 数据均为虚拟</div>
+  <ol class="stages" id="stages">
+    <li class="stage">①接收</li><li class="stage">②澄清</li><li class="stage">③计划</li>
+    <li class="stage">④预览</li><li class="stage">⑤备份</li><li class="stage">⑥执行</li>
+    <li class="stage">⑦闸门</li><li class="stage">⑧汇报</li><li class="stage">⑨验收</li>
+  </ol>
+</header>
+
+<main>
+  <!-- 左栏：助手 -->
+  <section class="col col-assistant">
+    <div class="panel-head">AI 助手 <span class="hint">思维链流式输出</span></div>
+    <div class="steps" id="steps"></div>
+    <div class="chat" id="chat"></div>
+    <div class="quick" id="quick"></div>
+    <div class="preset" id="preset">
+      <span>示例指令</span>
+      <button id="preset-cmd">把下载目录里的发票整理一下，汇总个表发给张三。</button>
+    </div>
+    <div class="input-row">
+      <input id="input" placeholder="输入一句话指令…" autocomplete="off">
+      <button id="send">发送</button>
+    </div>
+    <div class="controls">
+      <button id="btn-pause" class="ctl">暂停</button>
+      <button id="btn-speed" class="ctl">加速 ×3</button>
+      <button id="btn-inject" class="ctl">故障注入：关</button>
+      <button id="btn-reset" class="ctl danger">重置演示</button>
+    </div>
+  </section>
+
+  <!-- 中栏：虚拟文件系统 -->
+  <section class="col col-fs">
+    <div class="panel-head">访达 <span class="hint">虚拟文件系统</span></div>
+    <div class="fs">
+      <div class="fs-section">
+        <div class="fs-title">~/Downloads <span class="tag" id="count-download"></span></div>
+        <div class="files" id="fs-download"></div>
+      </div>
+      <div class="fs-section">
+        <div class="fs-title">~/Documents/发票 <span class="tag" id="count-archive"></span></div>
+        <div id="fs-archive"></div>
+      </div>
+      <div class="fs-section">
+        <div class="fs-title dim">~/.ai-assistant/backup/TASK-2026-0909 <span class="tag" id="count-backup"></span></div>
+        <div class="files backup" id="fs-backup"></div>
+      </div>
+      <div class="fs-section">
+        <div class="fs-title">~/Documents <span class="hint">产物</span></div>
+        <div class="files" id="fs-artifacts"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右栏：虚拟邮件客户端 -->
+  <section class="col col-mail">
+    <div class="panel-head">邮件 <span class="hint">虚拟邮件客户端</span></div>
+    <div class="mail-tabs">
+      <button class="tab active" data-tab="inbox">收件箱 <b id="n-inbox">0</b></button>
+      <button class="tab" data-tab="drafts">草稿 <b id="n-drafts">0</b></button>
+      <button class="tab" data-tab="sent">已发送 <b id="n-sent">0</b></button>
+    </div>
+    <div class="mail-list" id="mail-list"></div>
+    <div class="mail-detail" id="mail-detail">
+      <div class="detail-empty">点击邮件查看详情</div>
+    </div>
+  </section>
+</main>
+
+<!-- 通讯录授权弹窗（P1：模拟 macOS 系统授权） -->
+<div class="modal" id="auth-modal">
+  <div class="modal-box auth-box">
+    <div class="auth-icon">👤</div>
+    <div class="auth-title">“AI 助手”想要访问你的通讯录</div>
+    <div class="auth-desc">
+      仅用于解析指令中的收件人（只读权限）。拒绝也没关系——你可以直接提供邮箱，任务不受影响。
+    </div>
+    <div class="btn-row center">
+      <button class="btn ghost" id="auth-deny">不允许</button>
+      <button class="btn primary" id="auth-allow">允许</button>
+    </div>
+  </div>
+</div>
+
+<!-- 汇总表弹窗 -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modal-title"></span>
+      <button id="modal-close">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
