@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>「一句话代办」可交互演示 - TaskPilot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        #demo-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: white;
+        }
+
+        header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #f0f0f0;
+            border-color: #999;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #0366d6;
+            color: white;
+            border-color: #0366d6;
+        }
+
+        .btn-primary:hover {
+            background: #0256c7;
+        }
+
+        .control-select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            height: 3px;
+            background: #e0e0e0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #0366d6;
+            width: 0%;
+            transition: width 0.2s;
+        }
+
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .column h2 {
+            font-size: 14px;
+            padding: 10px 15px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            margin: 0;
+        }
+
+        .panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .thought-stream {
+            line-height: 1.6;
+            font-size: 14px;
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+
+        .thought-text {
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step-item {
+            padding: 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .step-item.done {
+            background: #f0f9ff;
+            border-color: #0366d6;
+        }
+
+        .step-item.running {
+            background: #fff8f0;
+            border-color: #ff9e64;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .step-status {
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .file-section {
+            margin-bottom: 15px;
+        }
+
+        .file-section h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .file-list {
+            list-style: none;
+            font-size: 12px;
+        }
+
+        .file-item {
+            padding: 6px 8px;
+            background: white;
+            margin-bottom: 4px;
+            border-radius: 2px;
+            border: 1px solid #e0e0e0;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-10px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .file-item.moving {
+            background: #fff0f5;
+            border-color: #ff69b4;
+        }
+
+        .mail-folders {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .mail-folder-btn {
+            padding: 8px 12px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 2px solid transparent;
+            color: #666;
+        }
+
+        .mail-folder-btn.active {
+            color: #0366d6;
+            border-bottom-color: #0366d6;
+        }
+
+        .mail-list {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .mail-item {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .mail-item:hover {
+            background: #f5f5f5;
+        }
+
+        .mail-item.selected {
+            background: #e8f4fd;
+        }
+
+        .mail-detail {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            animation: modalIn 0.3s;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .modal-content {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div id="demo-container">
+        <header id="header">
+            <h1>「一句话代办」可交互演示</h1>
+            <div class="controls">
+                <button id="play-btn" class="btn btn-primary">▶ 开始演示</button>
+                <button id="pause-btn" class="btn" disabled>⏸ 暂停</button>
+                <button id="reset-btn" class="btn">↻ 重置</button>
+                <select id="speed-select" class="control-select">
+                    <option value="0.5">×0.5 慢速</option>
+                    <option value="1" selected>×1.0 正常</option>
+                    <option value="2">×2.0 快速</option>
+                    <option value="3">×3.0 超快</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill"></div>
+        </div>
+
+        <main class="three-column">
+            <section class="column left-column">
+                <h2>AI 助手</h2>
+                <div id="assistant-panel" class="panel">
+                    <div id="thought-container" class="thought-stream"></div>
+                    <div id="steps-container" class="steps-list"></div>
+                </div>
+            </section>
+
+            <section class="column middle-column">
+                <h2>虚拟文件系统</h2>
+                <div id="fs-panel" class="panel">
+                    <div id="download-dir" class="file-section">
+                        <h3>📁 下载目录</h3>
+                        <ul id="download-files" class="file-list"></ul>
+                    </div>
+                    <div id="archive-dir" class="file-section">
+                        <h3>📁 归档目录</h3>
+                        <ul id="archive-files" class="file-list"></ul>
+                    </div>
+                    <div id="backup-dir" class="file-section">
+                        <h3>🔒 隔离备份</h3>
+                        <ul id="backup-files" class="file-list"></ul>
+                    </div>
+                    <div id="summary-section" class="file-section">
+                        <h3>📊 汇总产物</h3>
+                        <div id="summary-file"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="column right-column">
+                <h2>虚拟邮件客户端</h2>
+                <div id="mail-panel" class="panel">
+                    <div class="mail-folders">
+                        <button class="mail-folder-btn active" data-folder="drafts">📝 草稿</button>
+                        <button class="mail-folder-btn" data-folder="sent">✓ 已发送</button>
+                    </div>
+                    <div id="mail-list" class="mail-list"></div>
+                    <div id="mail-detail" class="mail-detail"></div>
+                </div>
+            </section>
+        </main>
+
+        <div id="modals-container"></div>
+    </div>
+
+    <script type="module">
+        import { TimelinePlayer } from './timeline-player.js';
+
+        class DemoUI {
+            constructor() {
+                this.player = new TimelinePlayer('data/timeline.json');
+                this.setupEventHandlers();
+                this.init();
+            }
+
+            async init() {
+                const loaded = await this.player.load();
+                if (!loaded) {
+                    alert('Failed to load timeline data');
+                    return;
+                }
+                this.setupControls();
+            }
+
+            setupEventHandlers() {
+                this.player.on('thought', (data) => {
+                    this.appendThought(data.content || JSON.stringify(data).substring(0, 100));
+                });
+
+                this.player.on('step_status', (data) => {
+                    this.updateStepStatus(data);
+                });
+
+                this.player.on('fs_change', (data) => {
+                    this.updateFileSystem(data);
+                });
+
+                this.player.on('mail_change', (data) => {
+                    this.updateMailClient(data);
+                });
+
+                this.player.on('gate', (data) => {
+                    this.showGate(data);
+                });
+
+                this.player.on('question', (data) => {
+                    this.showQuestion(data);
+                });
+
+                this.player.on('plan', (data) => {
+                    this.showPlan(data);
+                });
+
+                this.player.on('report', (data) => {
+                    this.showReport(data);
+                });
+
+                this.player.on('playEnd', () => {
+                    this.showDoneState();
+                });
+
+                this.player.on('event', () => {
+                    this.updateProgress();
+                });
+            }
+
+            setupControls() {
+                document.getElementById('play-btn').addEventListener('click', () => {
+                    this.startPlayback();
+                });
+
+                document.getElementById('pause-btn').addEventListener('click', () => {
+                    if (this.player.isPaused) {
+                        this.player.resume();
+                        document.getElementById('pause-btn').textContent = '⏸ 暂停';
+                    } else {
+                        this.player.pause();
+                        document.getElementById('pause-btn').textContent = '▶ 继续';
+                    }
+                });
+
+                document.getElementById('reset-btn').addEventListener('click', () => {
+                    this.player.reset();
+                    this.clearUI();
+                    document.getElementById('play-btn').disabled = false;
+                    document.getElementById('pause-btn').disabled = true;
+                });
+
+                document.getElementById('speed-select').addEventListener('change', (e) => {
+                    this.player.setSpeed(parseFloat(e.target.value));
+                });
+            }
+
+            async startPlayback() {
+                document.getElementById('play-btn').disabled = true;
+                document.getElementById('pause-btn').disabled = false;
+                await this.player.play();
+            }
+
+            appendThought(content) {
+                const container = document.getElementById('thought-container');
+                const span = document.createElement('span');
+                span.className = 'thought-text';
+                span.textContent = content;
+                container.appendChild(span);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            updateStepStatus(data) {
+                const container = document.getElementById('steps-container');
+                let stepEl = document.getElementById(`step-${data.step}`);
+                
+                if (!stepEl) {
+                    stepEl = document.createElement('div');
+                    stepEl.id = `step-${data.step}`;
+                    stepEl.className = 'step-item';
+                    container.appendChild(stepEl);
+                }
+
+                const statusMap = { done: '✓', running: '▶', pending: '·' };
+                stepEl.innerHTML = `
+                    <span class="step-status">${statusMap[data.status] || '?'}</span>
+                    步骤 ${data.step}: ${data.description || '执行中'}
+                `;
+                stepEl.className = `step-item ${data.status}`;
+            }
+
+            updateFileSystem(data) {
+                if (data.action === 'move' && data.files) {
+                    this.updateFileList('archive-files', data.files);
+                }
+            }
+
+            updateMailClient(data) {
+                if (data.action === 'create_draft' && data.mail) {
+                    this.addMailItem('drafts', data.mail);
+                }
+            }
+
+            updateFileList(elementId, files) {
+                const ul = document.getElementById(elementId);
+                const fileArray = Array.isArray(files) ? files : [files];
+                ul.innerHTML = fileArray.map(f => `<li class="file-item">${f}</li>`).join('');
+            }
+
+            addMailItem(folder, mail) {
+                const list = document.getElementById('mail-list');
+                const item = document.createElement('div');
+                item.className = 'mail-item';
+                const to = typeof mail === 'string' ? mail : (mail.to || 'Unknown');
+                const subject = typeof mail === 'string' ? 'Mail' : (mail.subject || 'No Subject');
+                item.innerHTML = `<strong>${to}</strong><br/>${subject}`;
+                list.appendChild(item);
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.mail-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                    this.showMailDetail(mail);
+                });
+            }
+
+            showMailDetail(mail) {
+                const detail = document.getElementById('mail-detail');
+                if (typeof mail === 'string') {
+                    detail.innerHTML = `<div>${mail}</div>`;
+                } else {
+                    detail.innerHTML = `
+                        <div><strong>收件人：</strong> ${mail.to || 'Unknown'}</div>
+                        <div><strong>主题：</strong> ${mail.subject || 'No Subject'}</div>
+                        <div style="margin-top: 10px; border-top: 1px solid #e0e0e0; padding-top: 10px;">
+                            ${mail.body || 'No body'}
+                        </div>
+                    `;
+                }
+            }
+
+            showGate(data) {
+                this.showModal('发送确认', `
+                    <div class="modal-content">
+                        <p><strong>收件人：</strong> ${data.to || 'Unknown'}</p>
+                        <p><strong>主题：</strong> ${data.subject || 'No Subject'}</p>
+                        <p><strong>附件：</strong> ${data.attachments?.length || 0} 个文件</p>
+                    </div>
+                `);
+            }
+
+            showQuestion(data) {
+                this.showModal('确认信息', `
+                    <div class="modal-content">
+                        ${data.question || JSON.stringify(data)}
+                    </div>
+                `);
+            }
+
+            showPlan(data) {
+                const steps = data.steps ? data.steps.map((s, i) => `
+                    <div style="margin-bottom: 10px;">
+                        <strong>${i + 1}. ${s.title || 'Step'}</strong>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">${s.description || s}</div>
+                    </div>
+                `).join('') : JSON.stringify(data);
+
+                this.showModal('执行计划', `
+                    <div class="modal-content">
+                        ${steps}
+                    </div>
+                `);
+            }
+
+            showReport(data) {
+                this.showModal('任务完成', `
+                    <div class="modal-content">
+                        ${data.summary || JSON.stringify(data).substring(0, 200)}
+                    </div>
+                `);
+            }
+
+            showDoneState() {
+                const container = document.getElementById('modals-container');
+                container.innerHTML = `
+                    <div class="modal-overlay">
+                        <div class="modal">
+                            <h3>演示完成 ✅</h3>
+                            <div class="modal-content">
+                                总事件数：${this.player.events.length}<br/>
+                                总时长：${this.player.timeline.total_duration_ms}ms<br/>
+                                进度：100%
+                            </div>
+                            <div class="modal-buttons">
+                                <button class="btn btn-primary" onclick="location.reload()">重新开始</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            showModal(title, content) {
+                const container = document.getElementById('modals-container');
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay';
+                overlay.onclick = () => overlay.remove();
+
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.onclick = (e) => e.stopPropagation();
+                modal.innerHTML = `
+                    <h3>${title}</h3>
+                    ${content}
+                    <div class="modal-buttons">
+                        <button class="btn" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+                    </div>
+                `;
+
+                overlay.appendChild(modal);
+                container.appendChild(overlay);
+            }
+
+            updateProgress() {
+                const progress = this.player.getProgress();
+                document.getElementById('progress-fill').style.width = progress + '%';
+            }
+
+            clearUI() {
+                document.getElementById('thought-container').innerHTML = '';
+                document.getElementById('steps-container').innerHTML = '';
+                document.getElementById('mail-list').innerHTML = '';
+                document.getElementById('mail-detail').innerHTML = '';
+                document.getElementById('download-files').innerHTML = '';
+                document.getElementById('archive-files').innerHTML = '';
+                document.getElementById('backup-files').innerHTML = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new DemoUI();
+        });
+    </script>
+</body>
+</html>
